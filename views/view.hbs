@@ -1,10 +1,11 @@
 
 
-{{#if isLoggedIn}}
 
-{{else if isRegister}}
-    {{> register }}
-{{else}}
-    {{> login }}
-{{/if}}
-
+<div class="container">
+    <div class="row mt-5">
+        <div class="col-12">
+            <a class="btn btn-primary" href="/login" role="button">Login</a>
+            <a class="btn btn-secondary" href="/register" role="button">Register</a>
+        </div>
+    </div>
+</div>

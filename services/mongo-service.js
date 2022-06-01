@@ -3,31 +3,38 @@ import bcrypt  from 'bcrypt';
 
 class MongoService {
 
+    constructor() {
+        const userSchema = this.getSchema();
+        this.userModel = mongoose.model('user', userSchema);
+    }
+
      async connect() {
          mongoose.connect('mongodb+srv://test:NMZQbTCltcIhpUa3@cluster0.zxw9v.mongodb.net/usersdb?retryWrites=true&w=majority')
              .then(() => console.log('Mongo connected'))
              .catch(err => console.log(err));
      }
     async createUser(username, password){
-        const salt = bcrypt.genSaltSync(10);
-        const userSchema = this.getSchema();
-        const userModel = mongoose.model('user', userSchema);
-        const data = new userModel({
+        const salt = await bcrypt.genSalt(10);
+        const data = new this.userModel({
             username: username,
-            password: bcrypt.hashSync(password, salt)
+            password: await bcrypt.hash(password, salt)
         });
-        return await data.save();
+        return data.save();
     }
 
     async findUser(username) {
-        const userSchema = this.getSchema();
-        const userModel = mongoose.model('user', userSchema);
-        const user = userModel.find({username: username}).exec();
+        const user = await this.userModel.findOne({username: username}).exec();
 
         return !!user;
     }
 
-    async disconect() {
+    async checkUserAndCredentials(username, password){
+        const user = await this.userModel.findOne({username: username}).exec();
+
+        return !!(user && bcrypt.compareSync(password, user.password));
+    }
+
+    async disconnect() {
          mongoose.disconnect().then(() => console.log('Mongo discoencted'))
              .catch(err => console.log(err));
     }
