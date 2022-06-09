@@ -1,4 +1,5 @@
 import 'dotenv/config'
+import minimist from 'minimist';
 import express from 'express';
 import { createServer } from "http";
 import { engine } from 'express-handlebars';
@@ -7,6 +8,17 @@ import passport from 'passport';
 import session from 'express-session';
 import passportLocal from "passport-local";
 import MongoStore from 'connect-mongo';
+
+
+let args = minimist(process.argv.slice(2), {
+    alias: {
+        p: '-port',
+    },
+    default: {
+        port: 8080
+    },
+});
+
 
 const mongoService = new MongoService();
 mongoService.connect();
@@ -64,7 +76,6 @@ app.engine(
 app.set('views', './views');
 app.set('view engine', 'hbs');
 
-const port = 8080;
 
 app.get('/', (req, res) => {
     res.render("view");
@@ -127,6 +138,6 @@ app.get('/logout', (req, res, next) => {
 });
 
 
-httpServer.listen(port, () => {
-    console.log(`Example app listening on port ${port}`);
+httpServer.listen(args.port, () => {
+    console.log(`Example app listening on port ${args.port}`);
 })
