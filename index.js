@@ -1,3 +1,5 @@
+import 'dotenv/config'
+import minimist from 'minimist';
 import express from 'express';
 import { createServer } from "http";
 import { engine } from 'express-handlebars';
@@ -6,6 +8,23 @@ import passport from 'passport';
 import session from 'express-session';
 import passportLocal from "passport-local";
 import MongoStore from 'connect-mongo';
+import {fork} from 'node:child_process';
+import path from 'path';
+import {fileURLToPath} from 'url';
+
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+let args = minimist(process.argv.slice(2), {
+    alias: {
+        p: '-port',
+    },
+    default: {
+        port: 8080
+    },
+});
+
 
 const mongoService = new MongoService();
 mongoService.connect();
@@ -13,14 +32,18 @@ mongoService.connect();
 const LocalStrategy = passportLocal.Strategy;
 
 const app = express();
+const { Router } = express;
+const routerApi = Router();
 const httpServer = createServer(app);
 
+
+app.use('/api', routerApi);
 app.use( express.static('public'));
 app.use(express.urlencoded({extended: true}));
 
 app.use(session({
-    store: MongoStore.create({ mongoUrl: 'mongodb+srv://test:NMZQbTCltcIhpUa3@cluster0.zxw9v.mongodb.net/sessions?retryWrites=true&w=majority' }),
-    secret: 'mysecret',
+    store: MongoStore.create({ mongoUrl: process.env.MONGOSESSIONURL }),
+    secret: process.env.SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
@@ -63,11 +86,36 @@ app.engine(
 app.set('views', './views');
 app.set('view engine', 'hbs');
 
-const port = 8080;
 
 app.get('/', (req, res) => {
     res.render("view");
 });
+
+app.get('/info', (req, res) => {
+    res.json({
+        args: process.argv,
+        memory : process.memoryUsage.rss(),
+        nodeVersion: process.version,
+        workingDir: process.cwd(),
+        execDir: process.execPath,
+        processId: process.pid,
+        platform: process.platform
+    });
+});
+
+routerApi.get('/randoms', (req, res) => {
+    const cant = req.query.cant ? req.query.cant : 100000000;
+
+    const compute = fork(path.resolve(__dirname, './computo.cjs'));
+    compute.on('message', (m) => {
+        console.log('PARENT got message:', m);
+        res.json(m);
+    });
+
+    compute.send(cant);
+
+});
+
 
 app.get('/login', (req, res) => {
     res.render("login", {
@@ -126,6 +174,6 @@ app.get('/logout', (req, res, next) => {
 });
 
 
-httpServer.listen(port, () => {
-    console.log(`Example app listening on port ${port}`);
+httpServer.listen(args.port, () => {
+    console.log(`Example app listening on port ${args.port}`);
 })
