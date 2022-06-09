@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import express from 'express';
 import { createServer } from "http";
 import { engine } from 'express-handlebars';
@@ -19,8 +20,8 @@ app.use( express.static('public'));
 app.use(express.urlencoded({extended: true}));
 
 app.use(session({
-    store: MongoStore.create({ mongoUrl: 'mongodb+srv://test:NMZQbTCltcIhpUa3@cluster0.zxw9v.mongodb.net/sessions?retryWrites=true&w=majority' }),
-    secret: 'mysecret',
+    store: MongoStore.create({ mongoUrl: process.env.MONGOSESSIONURL }),
+    secret: process.env.SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
