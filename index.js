@@ -81,6 +81,18 @@ app.get('/', (req, res) => {
     res.render("view");
 });
 
+app.get('/info', (req, res) => {
+    res.json({
+        args: process.argv,
+        memory : process.memoryUsage.rss(),
+        nodeVersion: process.version,
+        workingDir: process.cwd(),
+        execDir: process.execPath,
+        processId: process.pid,
+        platform: process.platform
+    });
+});
+
 app.get('/login', (req, res) => {
     res.render("login", {
         isLoggedIn: req.user ? true : false,
