@@ -29,6 +29,7 @@
     "mongoose": "^6.3.5",
     "passport": "^0.6.0",
     "passport-local": "^1.0.0",
+    "random": "^3.0.6",
     "yargs": "^17.5.1"
   }
 }

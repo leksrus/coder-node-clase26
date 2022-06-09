@@ -8,7 +8,13 @@ import passport from 'passport';
 import session from 'express-session';
 import passportLocal from "passport-local";
 import MongoStore from 'connect-mongo';
+import {fork} from 'node:child_process';
+import path from 'path';
+import {fileURLToPath} from 'url';
 
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 let args = minimist(process.argv.slice(2), {
     alias: {
@@ -26,8 +32,12 @@ mongoService.connect();
 const LocalStrategy = passportLocal.Strategy;
 
 const app = express();
+const { Router } = express;
+const routerApi = Router();
 const httpServer = createServer(app);
 
+
+app.use('/api', routerApi);
 app.use( express.static('public'));
 app.use(express.urlencoded({extended: true}));
 
@@ -92,6 +102,20 @@ app.get('/info', (req, res) => {
         platform: process.platform
     });
 });
+
+routerApi.get('/randoms', (req, res) => {
+    const cant = req.query.cant ? req.query.cant : 100000000;
+
+    const compute = fork(path.resolve(__dirname, './computo.cjs'));
+    compute.on('message', (m) => {
+        console.log('PARENT got message:', m);
+        res.json(m);
+    });
+
+    compute.send(cant);
+
+});
+
 
 app.get('/login', (req, res) => {
     res.render("login", {
