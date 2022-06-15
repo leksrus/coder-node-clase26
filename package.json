@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node index.js",
+    "start:nodemon": "nodemon index.js",
+    "start:forever": "forever start -w index.js"
   },
   "repository": {
     "type": "git",
@@ -31,5 +33,10 @@
     "passport-local": "^1.0.0",
     "random": "^3.0.6",
     "yargs": "^17.5.1"
+  },
+  "devDependencies": {
+    "forever": "^4.0.3",
+    "nodemon": "^2.0.16",
+    "pm2": "^5.2.0"
   }
 }
