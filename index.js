@@ -41,7 +41,7 @@ const httpServer = createServer(app);
 
 
 app.use('/api', routerApi);
-app.use( express.static('public'));
+// app.use( express.static('public'));
 app.use(express.urlencoded({extended: true}));
 
 app.use(session({
