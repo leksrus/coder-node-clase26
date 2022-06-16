@@ -11,6 +11,7 @@ import MongoStore from 'connect-mongo';
 import {fork} from 'node:child_process';
 import path from 'path';
 import {fileURLToPath} from 'url';
+import os from 'os';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -18,13 +19,15 @@ const __dirname = path.dirname(__filename);
 
 let args = minimist(process.argv.slice(2), {
     alias: {
-        p: '-port',
+        p: 'port',
+        m: 'mode'
     },
     default: {
-        port: 8080
+        port: 8080,
+        mode: 'fork'
     },
 });
-
+console.log(args);
 
 const mongoService = new MongoService();
 mongoService.connect();
@@ -38,7 +41,7 @@ const httpServer = createServer(app);
 
 
 app.use('/api', routerApi);
-app.use( express.static('public'));
+// app.use( express.static('public'));
 app.use(express.urlencoded({extended: true}));
 
 app.use(session({
@@ -99,7 +102,8 @@ app.get('/info', (req, res) => {
         workingDir: process.cwd(),
         execDir: process.execPath,
         processId: process.pid,
-        platform: process.platform
+        platform: process.platform,
+        cpus: os.cpus()
     });
 });
 
