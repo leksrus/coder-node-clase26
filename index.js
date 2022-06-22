@@ -12,6 +12,8 @@ import {fork} from 'node:child_process';
 import path from 'path';
 import {fileURLToPath} from 'url';
 import os from 'os';
+import compression from 'compression';
+import log4js from 'log4js';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -27,7 +29,21 @@ let args = minimist(process.argv.slice(2), {
         mode: 'fork'
     },
 });
-console.log(args);
+
+log4js.configure({
+    appenders : {
+        console: { type: 'console'},
+        fileError: {type: 'file', filename: 'error.log'},
+        fileWarning: {type: 'file', filename: 'warn.log'}
+    },
+    categories: {
+        error: { appenders: ['fileError'], level: 'error' },
+        warning: { appenders: ['fileWarning'], level: 'warn'},
+        default: { appenders: ['console'], level: 'debug'}
+    }
+});
+
+
 
 const mongoService = new MongoService();
 mongoService.connect();
@@ -54,6 +70,8 @@ app.use(session({
     }
 }));
 
+app.use(compression());
+
 const verifyCallBack = async (username, password, done) => {
     const isValid = await mongoService.checkUserAndCredentials(username, password);
     if(isValid) return done(null, {username: username});
@@ -77,6 +95,14 @@ passport.deserializeUser((username, done) => {
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+const logger = (req, res, next) => {
+    const logger = log4js.getLogger();
+    logger.info(`route: ${req.url} and verb: ${req.method}`);
+    next();
+};
+
+app.use(logger);
 
 app.engine(
     "hbs",
@@ -177,6 +203,17 @@ app.get('/logout', (req, res, next) => {
     });
 });
 
+app.use(function(req, res, next) {
+    const logger = log4js.getLogger('warning');
+    logger.warn('Route not found');
+    return res.status(404).send({ message: 'Route'+req.url+' Not found.' });
+});
+
+app.use(function(err, req, res, next) {
+    const logger = log4js.getLogger('error');
+    logger.warn('Errors generic');
+    return res.status(500).send({ error: err });
+});
 
 httpServer.listen(args.port, () => {
     console.log(`Example app listening on port ${args.port}`);
